@@ -1,28 +1,32 @@
-import { EventEmitter } from 'events'
-import { readFile } from 'fs'
+import { EventEmitter } from "events";
+import { readFile } from "fs";
+import path from "path";
 
-function findRegex (files, regex) {
-  const emitter = new EventEmitter()
-  for (const file of files) {
-    readFile(file, 'utf8', (err, content) => {
-      if (err) {
-        return emitter.emit('error', err)
-      }
+// Resolve __dirname using import.meta.url (node 16)
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
-      emitter.emit('fileread', file)
-      const match = content.match(regex)
-      if (match) {
-        match.forEach(elem => emitter.emit('found', file, elem))
-      }
-    })
-  }
-  return emitter
+const filePathA = path.join(__dirname, "fileA.txt");
+const filePathB = path.join(__dirname, "fileB.json");
+
+function findRegex(files, regex) {
+    const emitter = new EventEmitter();
+    for (const file of files) {
+        readFile(file, "utf8", (err, content) => {
+            if (err) {
+                return emitter.emit("error", err);
+            }
+
+            emitter.emit("fileread", file);
+            const match = content.match(regex);
+            if (match) {
+                match.forEach((elem) => emitter.emit("found", file, elem));
+            }
+        });
+    }
+    return emitter;
 }
 
-findRegex(
-  ['fileA.txt', 'fileB.json'],
-  /hello \w+/g
-)
-  .on('fileread', file => console.log(`${file} was read`))
-  .on('found', (file, match) => console.log(`Matched "${match}" in ${file}`))
-  .on('error', err => console.error(`Error emitted ${err.message}`))
+findRegex([filePathA, filePathB], /hello \w+/g)
+    .on("fileread", (file) => console.log(`${file} was read`))
+    .on("found", (file, match) => console.log(`Matched "${match}" in ${file}`))
+    .on("error", (err) => console.error(`Error emitted ${err.message}`));
